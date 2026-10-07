@@ -8,7 +8,7 @@ from django.core.validators import validate_email
 
 from .permissions import IsBoardOwnerOrMember
 from kanban_app.models import Board
-from .serializers import BoardSerializer, UserSerializer, BoardDetailSerializer
+from .serializers import BoardSerializer, BoardUpdateSerializer, UserSerializer, BoardDetailSerializer
 
 
 class EmailCheckView(APIView):
@@ -33,6 +33,7 @@ class EmailCheckView(APIView):
 
         return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
 
+
 class BoardListCreateView(generics.ListCreateAPIView):
     serializer_class = BoardSerializer
 
@@ -45,7 +46,13 @@ class BoardListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
+
 class BoardDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Board.objects.all()
-    serializer_class = BoardDetailSerializer
     permission_classes = [IsAuthenticated, IsBoardOwnerOrMember]
+    http_method_names = ["get", "patch", "delete", "options"]
+
+    def get_serializer_class(self):
+        if self.request.method == "PATCH":
+            return BoardUpdateSerializer
+        return BoardDetailSerializer

@@ -2,6 +2,7 @@ from rest_framework import serializers
 from kanban_app.models import Board, Task
 from django.contrib.auth.models import User
 
+
 class UserSerializer(serializers.ModelSerializer):
     fullname = serializers.SerializerMethodField()
 
@@ -11,6 +12,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_fullname(self, obj):
         return obj.get_full_name()
+
 
 class BoardSerializer(serializers.ModelSerializer):
     member_count = serializers.SerializerMethodField()
@@ -71,3 +73,13 @@ class BoardDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Board
         fields = ["id", "title", "owner_id", "members", "tasks"]
+
+
+class BoardUpdateSerializer(serializers.ModelSerializer):
+    owner_data = UserSerializer(source="owner", read_only=True)
+    members_data = UserSerializer(source="members", many=True, read_only=True)
+
+    class Meta:
+        model = Board
+        fields = ["id", "title", "members", "owner_data", "members_data"]
+        extra_kwargs = {"members": {"write_only": True}}

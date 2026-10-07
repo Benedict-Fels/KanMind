@@ -1,7 +1,37 @@
-from rest_framework import generics
-from kanban_app.models import Board
-from .serializers import BoardSerializer
+from rest_framework import generics, status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 
+from .permissions import IsBoardOwnerOrMember
+from kanban_app.models import Board
+from .serializers import BoardSerializer, UserSerializer, BoardDetailSerializer
+
+
+class EmailCheckView(APIView):
+
+    def get(self, request):
+        email = request.query_params.get("email")
+
+        try:
+            validate_email(email)
+        except ValidationError:
+            return Response(
+                {"error": "A valid email is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = User.objects.filter(email=email).first()
+        if user is None:
+            return Response(
+                {"error": "User not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
 
 class BoardListCreateView(generics.ListCreateAPIView):
     serializer_class = BoardSerializer
@@ -14,3 +44,8 @@ class BoardListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
+
+class BoardDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Board.objects.all()
+    serializer_class = BoardDetailSerializer
+    permission_classes = [IsAuthenticated, IsBoardOwnerOrMember]

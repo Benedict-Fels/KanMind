@@ -7,8 +7,8 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 
 from .permissions import IsBoardOwnerOrMember
-from kanban_app.models import Board
-from .serializers import BoardSerializer, BoardUpdateSerializer, UserSerializer, BoardDetailSerializer
+from kanban_app.models import Board, Task
+from .serializers import BoardSerializer, BoardUpdateSerializer, TaskWithBoardSerializer, UserSerializer, BoardDetailSerializer
 
 
 class EmailCheckView(APIView):
@@ -45,6 +45,21 @@ class BoardListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
+
+
+class AssignedTaskListView(generics.ListAPIView):
+    serializer_class = TaskWithBoardSerializer
+
+    def get_queryset(self):
+        return Task.objects.filter(assignee=self.request.user)
+
+
+class ReviewingTaskListView(generics.ListAPIView):
+    serializer_class = TaskWithBoardSerializer
+
+    def get_queryset(self):
+        return Task.objects.filter(reviewer=self.request.user)
+
 
 
 class BoardDetailView(generics.RetrieveUpdateDestroyAPIView):

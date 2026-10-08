@@ -3,10 +3,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.validators import validate_email
+from django.shortcuts import get_object_or_404
 
-from .permissions import IsBoardOwnerOrMember
+from .permissions import IsBoardOwnerOrMember, TaskAccessPermission
 from kanban_app.models import Board, Task
 from .serializers import BoardSerializer, BoardUpdateSerializer, TaskCreateSerializer, TaskWithBoardSerializer, UserSerializer, BoardDetailSerializer
 
@@ -46,13 +47,20 @@ class BoardListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
-
 class TaskCreateView(generics.CreateAPIView):
     serializer_class = TaskCreateSerializer
 
+    def create(self, request):
+        board_id = request.data.get("board")
+
+        if type(board_id) is int:
+            board = get_object_or_404(Board, id=board_id)
+            if not board.user_has_access(request.user):
+                raise PermissionDenied("You must be a member of this board.")
+        return super().create(request)
+
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
-
 
 class AssignedTaskListView(generics.ListAPIView):
     serializer_class = TaskWithBoardSerializer
@@ -77,3 +85,9 @@ class BoardDetailView(generics.RetrieveUpdateDestroyAPIView):
         if self.request.method == "PATCH":
             return BoardUpdateSerializer
         return BoardDetailSerializer
+
+
+class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Task.objects.all()
+    permission_classes = [IsAuthenticated, TaskAccessPermission]
+    http_method_names = ["patch", "delete", "options"]

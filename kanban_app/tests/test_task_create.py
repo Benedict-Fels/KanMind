@@ -87,6 +87,7 @@ class TaskCreateBasicTests(TaskCreateTestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("title", response.data)
 
+
 class TaskCreateMemberRuleTests(TaskCreateTestCase):
 
     def test_outsider_as_assignee_returns_400(self):
@@ -111,3 +112,35 @@ class TaskCreateMemberRuleTests(TaskCreateTestCase):
         self.authenticate(self.member)
         self.post_task(self.valid_data(assignee_id=self.outsider.id))
         self.assertFalse(Task.objects.exists())
+
+
+class TaskCreateBoardAccessTests(TaskCreateTestCase):
+
+    def test_unknown_board_returns_404(self):
+        self.authenticate(self.member)
+        response = self.post_task(self.valid_data(board=9999))
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_outsider_cannot_create_task(self):
+        self.authenticate(self.outsider)
+        response = self.post_task(self.valid_data(assignee_id=None))
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertFalse(Task.objects.exists())
+
+    def test_owner_without_membership_can_create_task(self):
+        self.authenticate(self.owner)
+        response = self.post_task(self.valid_data())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_missing_board_returns_400(self):
+        self.authenticate(self.member)
+        data = self.valid_data()
+        del data["board"]
+        response = self.post_task(data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("board", response.data)
+
+    def test_board_as_text_returns_400(self):
+        self.authenticate(self.member)
+        response = self.post_task(self.valid_data(board="abc"))
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

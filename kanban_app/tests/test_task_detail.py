@@ -145,5 +145,6 @@ class TaskPatchTests(TaskDetailTestCase):
 
     def test_sending_same_board_is_allowed(self):
         self.authenticate(self.member)
-        response = self.patch_task({"board": self.board.id, "title": "Changed"})
+        data = {"board": self.board.id, "title": "Changed"}
+        response = self.patch_task(data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)

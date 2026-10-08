@@ -92,13 +92,15 @@ class TaskCreateMemberRuleTests(TaskCreateTestCase):
 
     def test_outsider_as_assignee_returns_400(self):
         self.authenticate(self.member)
-        response = self.post_task(self.valid_data(assignee_id=self.outsider.id))
+        data = self.valid_data(assignee_id=self.outsider.id)
+        response = self.post_task(data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("assignee_id", response.data)
 
     def test_outsider_as_reviewer_returns_400(self):
         self.authenticate(self.member)
-        response = self.post_task(self.valid_data(reviewer_id=self.outsider.id))
+        data = self.valid_data(reviewer_id=self.outsider.id)
+        response = self.post_task(data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("reviewer_id", response.data)
 

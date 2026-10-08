@@ -1,10 +1,14 @@
+"""Serializers for user registration and login."""
+
 from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
-from django.contrib.auth.password_validation import validate_password
 
 
 class RegistrationSerializer(serializers.Serializer):
+    """Validate registration data and create a new user."""
+
     fullname = serializers.CharField()
     email = serializers.EmailField(
         validators=[UniqueValidator(queryset=User.objects.all(),
@@ -15,6 +19,7 @@ class RegistrationSerializer(serializers.Serializer):
     repeated_password = serializers.CharField(write_only=True)
 
     def validate(self, data):
+        """Make sure both passwords match."""
         if data["password"] != data["repeated_password"]:
             raise serializers.ValidationError(
                 {"repeated_password": "Passwords do not match."}
@@ -22,12 +27,13 @@ class RegistrationSerializer(serializers.Serializer):
         return data
 
     def create(self, validated_data):
+        """Split the full name and create the user (email as username)."""
         fullname = validated_data["fullname"]
-        teile = fullname.split(" ", 1)
+        parts = fullname.split(" ", 1)
 
-        if len(teile) >= 2:
-            first_name = teile[0]
-            last_name = teile[1]
+        if len(parts) >= 2:
+            first_name = parts[0]
+            last_name = parts[1]
         else:
             first_name = fullname
             last_name = ""
@@ -43,10 +49,13 @@ class RegistrationSerializer(serializers.Serializer):
 
 
 class LoginSerializer(serializers.Serializer):
+    """Check email and password and return the matching user."""
+
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
 
     def validate(self, data):
+        """Find the user by email and check the password."""
         try:
             user = User.objects.get(email=data["email"])
         except User.DoesNotExist:

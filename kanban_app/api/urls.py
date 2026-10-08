@@ -1,4 +1,5 @@
 from django.urls import path
+
 from .views import (AssignedTaskListView, BoardDetailView,
                     BoardListCreateView, CommentDeleteView,
                     CommentListCreateView, EmailCheckView,
@@ -18,5 +19,5 @@ urlpatterns = [
     path("tasks/<int:task_id>/comments/", CommentListCreateView.as_view(),
          name="comment-list"),
     path("tasks/<int:task_id>/comments/<int:pk>/", CommentDeleteView.as_view(),
-         name="comment-detail",)
+         name="comment-detail"),
 ]

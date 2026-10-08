@@ -1,3 +1,5 @@
+"""Management command that fills the database with demo data."""
+
 from datetime import date, timedelta
 
 from django.contrib.auth.models import User
@@ -48,10 +50,15 @@ COMMENTS = {
 
 
 class Command(BaseCommand):
-    help = "Create demo users, boards, "
-    "tasks and comments for local development."
+    """Create demo users, boards, tasks and comments."""
+
+    help = (
+        "Create demo users, boards, tasks and comments "
+        "for local development."
+    )
 
     def handle(self, *args, **options):
+        """Create all demo data. Running it twice creates no duplicates."""
         users = self.create_users()
         for board_title, (owner_email, member_emails) in BOARDS.items():
             board = self.create_board(
@@ -60,6 +67,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("Demo data created."))
 
     def create_users(self):
+        """Create the demo users if missing and return them by email."""
         users = {}
         for email, first_name, last_name in USERS:
             user = User.objects.filter(username=email).first()
@@ -75,12 +83,14 @@ class Command(BaseCommand):
         return users
 
     def create_board(self, title, owner_email, member_emails, users):
+        """Create the board if missing and set its members."""
         board, _ = Board.objects.get_or_create(
             title=title, owner=users[owner_email])
         board.members.set([users[email] for email in member_emails])
         return board
 
     def create_tasks(self, board, task_data, users):
+        """Create the demo tasks and comments of a board once."""
         if board.tasks.exists():
             return
         for (title, status, priority, assignee,

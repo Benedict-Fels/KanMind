@@ -111,7 +111,8 @@ class BoardPatchTests(BoardDetailTestCase):
 
     def patch_board(self, data, board_id=None):
         board_id = board_id or self.board.id
-        return self.client.patch(self.detail_url(board_id), data, format="json")
+        url = self.detail_url(board_id)
+        return self.client.patch(url, data, format="json")
 
     def test_owner_can_update_title_and_members(self):
         self.authenticate(self.owner)

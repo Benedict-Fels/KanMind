@@ -1,23 +1,26 @@
+"""Database models for boards, tasks and comments."""
+
 from django.contrib.auth.models import User
 from django.db import models
 
 
 class Board(models.Model):
+    """A Kanban board with an owner and any number of members."""
+
     title = models.CharField(max_length=255)
     owner = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="owned_boards"
     )
     members = models.ManyToManyField(User, related_name="boards", blank=True)
 
-    def user_has_access(self, user):
-        return (self.owner_id == user.id or
-                self.members.filter(id=user.id).exists())
-
     def __str__(self):
+        """Return the board title."""
         return self.title
 
 
 class Task(models.Model):
+    """A task on a board, optionally with assignee and reviewer."""
+
     STATUS_CHOICES = [
         ("to-do", "To do"),
         ("in-progress", "In progress"),
@@ -47,10 +50,13 @@ class Task(models.Model):
                                    on_delete=models.SET_NULL, null=True)
 
     def __str__(self):
+        """Return the task title."""
         return self.title
 
 
 class Comment(models.Model):
+    """A comment written by a user on a task."""
+
     task = models.ForeignKey(
         Task, on_delete=models.CASCADE, related_name="comments")
     author = models.ForeignKey(
@@ -62,4 +68,5 @@ class Comment(models.Model):
         ordering = ["created_at"]
 
     def __str__(self):
+        """Return a short description for the admin."""
         return f"Comment by {self.author.username} on {self.task.title}"

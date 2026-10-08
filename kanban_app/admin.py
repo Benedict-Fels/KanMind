@@ -1,3 +1,5 @@
+"""Register the kanban models in the Django admin."""
+
 from django.contrib import admin
 from .models import Board, Task, Comment
 

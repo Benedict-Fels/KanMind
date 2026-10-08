@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from kanban_app.models import Board, Task
+from kanban_app.models import Board, Comment, Task
 from django.contrib.auth.models import User
 
 
@@ -81,6 +81,17 @@ class TaskWithBoardSerializer(TaskSerializer):
                   "comments_count"]
 
 
+class CommentSerializer(serializers.ModelSerializer):
+    author = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Comment
+        fields = ["id", "created_at", "author", "content"]
+
+    def get_author(self, obj):
+            return obj.get_full_name()
+
+
 class TaskCreateSerializer(TaskWithBoardSerializer):
     assignee_id = serializers.PrimaryKeyRelatedField(
         source="assignee",
@@ -98,8 +109,13 @@ class TaskCreateSerializer(TaskWithBoardSerializer):
     )
 
     def validate(self, data):
-        board = data["board"]
         errors = {}
+        if self.instance:
+            board = self.instance.board
+            if "board" in data and data["board"] != board:
+                errors["board"] = "The board of a task cannot be changed."
+        else:
+            board = data["board"]
         for field in ("assignee", "reviewer"):
             user = data.get(field)
             if user and not board.user_has_access(user):
@@ -110,6 +126,25 @@ class TaskCreateSerializer(TaskWithBoardSerializer):
 
     class Meta(TaskWithBoardSerializer.Meta):
         fields = TaskWithBoardSerializer.Meta.fields + ["assignee_id", "reviewer_id"]
+
+
+class TaskUpdateSerializer(TaskCreateSerializer):
+
+    class Meta(TaskCreateSerializer.Meta):
+        fields = [
+            "id",
+            "board",
+            "title",
+            "description",
+            "status",
+            "priority",
+            "assignee",
+            "reviewer",
+            "assignee_id",
+            "reviewer_id",
+            "due_date",
+        ]
+        extra_kwargs = {"board": {"write_only": True}}
 
 
 class BoardDetailSerializer(serializers.ModelSerializer):

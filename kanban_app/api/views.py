@@ -8,8 +8,8 @@ from django.core.validators import validate_email
 from django.shortcuts import get_object_or_404
 
 from .permissions import IsBoardOwnerOrMember, TaskAccessPermission
-from kanban_app.models import Board, Task
-from .serializers import BoardSerializer, BoardUpdateSerializer, TaskCreateSerializer, TaskWithBoardSerializer, UserSerializer, BoardDetailSerializer
+from kanban_app.models import Board, Comment, Task
+from .serializers import BoardSerializer, BoardUpdateSerializer, CommentSerializer, TaskCreateSerializer, TaskUpdateSerializer, TaskWithBoardSerializer, UserSerializer, BoardDetailSerializer
 
 
 class EmailCheckView(APIView):
@@ -76,6 +76,16 @@ class ReviewingTaskListView(generics.ListAPIView):
         return Task.objects.filter(reviewer=self.request.user)
 
 
+class CommentListCreateView(generics.ListCreateAPIView):
+    serializer_class = CommentSerializer
+
+    def get_queryset(self):
+        return Comment.objects.filter(task_id=self.kwargs["task_id"])
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user, task_id=self.kwargs["task_id"])
+
+
 class BoardDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Board.objects.all()
     permission_classes = [IsAuthenticated, IsBoardOwnerOrMember]
@@ -91,3 +101,4 @@ class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Task.objects.all()
     permission_classes = [IsAuthenticated, TaskAccessPermission]
     http_method_names = ["patch", "delete", "options"]
+    serializer_class = TaskUpdateSerializer

@@ -1,6 +1,6 @@
-from rest_framework import serializers
-from kanban_app.models import Board, Comment, Task
 from django.contrib.auth.models import User
+from kanban_app.models import Board, Comment, Task
+from rest_framework import serializers
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -119,13 +119,15 @@ class TaskCreateSerializer(TaskWithBoardSerializer):
         for field in ("assignee", "reviewer"):
             user = data.get(field)
             if user and not board.user_has_access(user):
-                errors[f"{field}_id"] = f"{field.capitalize()} must be a member of the board."
+                errors[f"{field}_id"] = f"{field.capitalize()} "
+                "must be a member of the board."
         if errors:
             raise serializers.ValidationError(errors)
         return data
 
     class Meta(TaskWithBoardSerializer.Meta):
-        fields = TaskWithBoardSerializer.Meta.fields + ["assignee_id", "reviewer_id"]
+        fields = TaskWithBoardSerializer.Meta.fields + ["assignee_id",
+                                                        "reviewer_id"]
 
 
 class TaskUpdateSerializer(TaskCreateSerializer):

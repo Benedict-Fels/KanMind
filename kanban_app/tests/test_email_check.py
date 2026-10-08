@@ -10,7 +10,8 @@ class EmailCheckTests(APITestCase):
     def setUp(self):
         self.url = reverse("email-check")
         self.requester = User.objects.create_user(
-            username="kevin@test.de", email="kevin@test.de", password="testpass123"
+            username="kevin@test.de", email="kevin@test.de",
+            password="testpass123"
         )
         self.anna = User.objects.create_user(
             username="anna@test.de",
@@ -30,7 +31,8 @@ class EmailCheckTests(APITestCase):
     def test_existing_email_returns_user(self):
         response = self.client.get(self.url, {"email": "anna@test.de"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        expected = {"id": self.anna.id, "email": "anna@test.de", "fullname": "Anna Schmidt"}
+        expected = {"id": self.anna.id, "email": "anna@test.de",
+                    "fullname": "Anna Schmidt"}
         self.assertEqual(response.data, expected)
 
     def test_unknown_email_returns_404(self):

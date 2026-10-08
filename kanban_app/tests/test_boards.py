@@ -8,7 +8,8 @@ from kanban_app.models import Board, Task
 
 
 def create_user(email):
-    return User.objects.create_user(username=email, email=email, password="testpass123")
+    return User.objects.create_user(username=email, email=email,
+                                    password="testpass123")
 
 
 class BoardTestCase(APITestCase):
@@ -109,11 +110,13 @@ class BoardCreateTests(BoardTestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data["title"], "New Board")
         self.assertEqual(response.data["owner_id"], self.owner.id)
-        self.assertTrue(Board.objects.filter(title="New Board", owner=self.owner).exists())
+        self.assertTrue(Board.objects.filter(title="New Board",
+                                             owner=self.owner).exists())
 
     def test_owner_is_not_added_as_member_automatically(self):
         self.authenticate(self.owner)
-        data = {"title": "New Board", "members": [self.member.id, self.outsider.id]}
+        data = {"title": "New Board", "members": [self.member.id,
+                                                  self.outsider.id]}
         response = self.client.post(self.boards_url, data, format="json")
         self.assertEqual(response.data["member_count"], 2)
         board = Board.objects.get(id=response.data["id"])

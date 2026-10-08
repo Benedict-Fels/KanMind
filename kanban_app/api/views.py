@@ -1,15 +1,20 @@
-from rest_framework import generics, status
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.validators import validate_email
 from django.shortcuts import get_object_or_404
+from rest_framework import generics, status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from .permissions import IsBoardOwnerOrMember, IsCommentAuthor, IsTaskBoardMember, TaskAccessPermission
 from kanban_app.models import Board, Comment, Task
-from .serializers import BoardSerializer, BoardUpdateSerializer, CommentSerializer, TaskCreateSerializer, TaskUpdateSerializer, TaskWithBoardSerializer, UserSerializer, BoardDetailSerializer
+
+from .permissions import (IsBoardOwnerOrMember, IsCommentAuthor,
+                          IsTaskBoardMember, TaskAccessPermission)
+from .serializers import (BoardDetailSerializer, BoardSerializer,
+                          BoardUpdateSerializer, CommentSerializer,
+                          TaskCreateSerializer, TaskUpdateSerializer,
+                          TaskWithBoardSerializer, UserSerializer)
 
 
 class EmailCheckView(APIView):
@@ -47,6 +52,7 @@ class BoardListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
+
 class TaskCreateView(generics.CreateAPIView):
     serializer_class = TaskCreateSerializer
 
@@ -61,6 +67,7 @@ class TaskCreateView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
+
 
 class AssignedTaskListView(generics.ListAPIView):
     serializer_class = TaskWithBoardSerializer
@@ -84,7 +91,8 @@ class CommentListCreateView(generics.ListCreateAPIView):
         return Comment.objects.filter(task_id=self.kwargs["task_id"])
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user, task_id=self.kwargs["task_id"])
+        serializer.save(author=self.request.user,
+                        task_id=self.kwargs["task_id"])
 
 
 class CommentDeleteView(generics.DestroyAPIView):

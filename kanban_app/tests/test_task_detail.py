@@ -6,7 +6,8 @@ from kanban_app.tests.test_boards import BoardTestCase, create_user
 
 
 class TaskDetailTestCase(BoardTestCase):
-    """A task created by the member, plus a second member who did not create it."""
+    """A task created by the member,
+    plus a second member who did not create it."""
 
     def setUp(self):
         super().setUp()
@@ -70,7 +71,8 @@ class TaskDeleteTests(TaskDetailTestCase):
     def test_get_is_not_allowed(self):
         self.authenticate(self.owner)
         response = self.client.get(self.detail_url())
-        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        self.assertEqual(response.status_code,
+                         status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 class TaskPatchTests(TaskDetailTestCase):
@@ -132,7 +134,8 @@ class TaskPatchTests(TaskDetailTestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_changing_board_returns_400(self):
-        other_board = Board.objects.create(title="Other Board", owner=self.member)
+        other_board = Board.objects.create(title="Other Board",
+                                           owner=self.member)
         self.authenticate(self.member)
         response = self.patch_task({"board": other_board.id})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

@@ -5,7 +5,9 @@ from kanban_app.tests.test_boards import BoardTestCase
 
 
 class TaskListTestCase(BoardTestCase):
-    """Adds three tasks: one assigned to the member, one to the owner, one to nobody."""
+    """Adds three tasks: one assigned to the member,
+    one to the owner, one to nobody.
+    """
 
     def setUp(self):
         super().setUp()
@@ -69,5 +71,7 @@ class ReviewingTests(TaskListTestCase):
 class TaskListUrlTests(TaskListTestCase):
 
     def test_urls_match_the_docs(self):
-        self.assertEqual(reverse("tasks-assigned-to-me"), "/api/tasks/assigned-to-me/")
-        self.assertEqual(reverse("tasks-reviewing"), "/api/tasks/reviewing/")
+        self.assertEqual(reverse("tasks-assigned-to-me"),
+                         "/api/tasks/assigned-to-me/")
+        self.assertEqual(reverse("tasks-reviewing"),
+                         "/api/tasks/reviewing/")

@@ -11,6 +11,7 @@ class BoardDetailTestCase(BoardTestCase):
     def detail_url(self, board_id):
         return reverse("board-detail", kwargs={"pk": board_id})
 
+
 class BoardDetailGetTests(BoardDetailTestCase):
 
     def test_requires_authentication(self):
@@ -37,7 +38,8 @@ class BoardDetailGetTests(BoardDetailTestCase):
         task = self.create_task("to-do", "high")
         task.assignee = self.member
         task.save()
-        Comment.objects.create(task=task, author=self.member, content="Looks good")
+        Comment.objects.create(task=task, author=self.member,
+                               content="Looks good")
         self.authenticate(self.owner)
         response = self.client.get(self.detail_url(self.board.id))
         task_data = response.data["tasks"][0]
@@ -113,7 +115,8 @@ class BoardPatchTests(BoardDetailTestCase):
 
     def test_owner_can_update_title_and_members(self):
         self.authenticate(self.owner)
-        response = self.patch_board({"title": "Changed", "members": [self.outsider.id]})
+        response = self.patch_board({"title": "Changed",
+                                     "members": [self.outsider.id]})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["title"], "Changed")
         member_ids = [member["id"] for member in response.data["members_data"]]
@@ -156,5 +159,7 @@ class BoardPatchTests(BoardDetailTestCase):
     def test_put_is_not_allowed(self):
         self.authenticate(self.owner)
         data = {"title": "Changed", "members": []}
-        response = self.client.put(self.detail_url(self.board.id), data, format="json")
-        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        response = self.client.put(self.detail_url(self.board.id),
+                                   data, format="json")
+        self.assertEqual(response.status_code,
+                         status.HTTP_405_METHOD_NOT_ALLOWED)

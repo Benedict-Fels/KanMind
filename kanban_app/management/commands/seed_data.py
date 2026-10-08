@@ -16,20 +16,24 @@ USERS = [
 
 # board title -> (owner, members)
 BOARDS = {
-    "Website Relaunch": ("kevin@kovacsi.de", ["kevin@kovacsi.de", "anna@test.de"]),
+    "Website Relaunch": ("kevin@kovacsi.de",
+                         ["kevin@kovacsi.de", "anna@test.de"]),
     "Mobile App": ("anna@test.de", ["anna@test.de", "max@test.de"]),
 }
 
 # board title -> [(title, status, priority, assignee, reviewer, due_in_days)]
 TASKS = {
     "Website Relaunch": [
-        ("Design homepage", "to-do", "high", "anna@test.de", "kevin@kovacsi.de", 7),
-        ("Set up hosting", "in-progress", "medium", "kevin@kovacsi.de", None, 3),
+        ("Design homepage", "to-do", "high",
+         "anna@test.de", "kevin@kovacsi.de", 7),
+        ("Set up hosting", "in-progress",
+         "medium", "kevin@kovacsi.de", None, 3),
         ("Write imprint", "review", "low", None, None, None),
         ("Collect content", "done", "medium", "anna@test.de", None, -2),
     ],
     "Mobile App": [
-        ("Create wireframes", "to-do", "high", "max@test.de", "anna@test.de", 10),
+        ("Create wireframes", "to-do", "high",
+         "max@test.de", "anna@test.de", 10),
         ("Choose framework", "done", "low", "anna@test.de", None, None),
     ],
 }
@@ -44,12 +48,14 @@ COMMENTS = {
 
 
 class Command(BaseCommand):
-    help = "Create demo users, boards, tasks and comments for local development."
+    help = "Create demo users, boards, "
+    "tasks and comments for local development."
 
     def handle(self, *args, **options):
         users = self.create_users()
         for board_title, (owner_email, member_emails) in BOARDS.items():
-            board = self.create_board(board_title, owner_email, member_emails, users)
+            board = self.create_board(
+                board_title, owner_email, member_emails, users)
             self.create_tasks(board, TASKS.get(board_title, []), users)
         self.stdout.write(self.style.SUCCESS("Demo data created."))
 
@@ -69,14 +75,16 @@ class Command(BaseCommand):
         return users
 
     def create_board(self, title, owner_email, member_emails, users):
-        board, _ = Board.objects.get_or_create(title=title, owner=users[owner_email])
+        board, _ = Board.objects.get_or_create(
+            title=title, owner=users[owner_email])
         board.members.set([users[email] for email in member_emails])
         return board
 
     def create_tasks(self, board, task_data, users):
         if board.tasks.exists():
             return
-        for title, status, priority, assignee, reviewer, due_in_days in task_data:
+        for (title, status, priority, assignee,
+             reviewer, due_in_days) in task_data:
             due_date = None
             if due_in_days is not None:
                 due_date = date.today() + timedelta(days=due_in_days)
@@ -92,5 +100,5 @@ class Command(BaseCommand):
                 created_by=board.owner,
             )
             for author_email, content in COMMENTS.get(title, []):
-                Comment.objects.create(task=task, author=users[author_email], content=content)
-
+                Comment.objects.create(
+                    task=task, author=users[author_email], content=content)

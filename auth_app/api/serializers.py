@@ -8,7 +8,8 @@ class RegistrationSerializer(serializers.Serializer):
     fullname = serializers.CharField()
     email = serializers.EmailField(
         validators=[UniqueValidator(queryset=User.objects.all(),
-                                    message="This email is already registered."),])
+                                    message="This email is "
+                                    "already registered."),])
     password = serializers.CharField(
         write_only=True, validators=[validate_password])
     repeated_password = serializers.CharField(write_only=True)

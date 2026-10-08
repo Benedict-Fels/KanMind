@@ -81,6 +81,37 @@ class TaskWithBoardSerializer(TaskSerializer):
                   "comments_count"]
 
 
+class TaskCreateSerializer(TaskWithBoardSerializer):
+    assignee_id = serializers.PrimaryKeyRelatedField(
+        source="assignee",
+        queryset=User.objects.all(),
+        write_only=True,
+        allow_null=True,
+        required=False,
+    )
+    reviewer_id = serializers.PrimaryKeyRelatedField(
+        source="reviewer",
+        queryset=User.objects.all(),
+        write_only=True,
+        allow_null=True,
+        required=False,
+    )
+
+    def validate(self, data):
+        board = data["board"]
+        errors = {}
+        for field in ("assignee", "reviewer"):
+            user = data.get(field)
+            if user and not board.user_has_access(user):
+                errors[f"{field}_id"] = f"{field.capitalize()} must be a member of the board."
+        if errors:
+            raise serializers.ValidationError(errors)
+        return data
+
+    class Meta(TaskWithBoardSerializer.Meta):
+        fields = TaskWithBoardSerializer.Meta.fields + ["assignee_id", "reviewer_id"]
+
+
 class BoardDetailSerializer(serializers.ModelSerializer):
     members = UserSerializer(many=True, read_only=True)
     tasks = TaskSerializer(many=True, read_only=True)

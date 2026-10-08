@@ -9,6 +9,9 @@ class Board(models.Model):
     )
     members = models.ManyToManyField(User, related_name="boards", blank=True)
 
+    def user_has_access(self, user):
+        return self.owner_id == user.id or self.members.filter(id=user.id).exists()
+
     def __str__(self):
         return self.title
 

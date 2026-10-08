@@ -7,7 +7,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.validators import validate_email
 from django.shortcuts import get_object_or_404
 
-from .permissions import IsBoardOwnerOrMember, TaskAccessPermission
+from .permissions import IsBoardOwnerOrMember, IsCommentAuthor, IsTaskBoardMember, TaskAccessPermission
 from kanban_app.models import Board, Comment, Task
 from .serializers import BoardSerializer, BoardUpdateSerializer, CommentSerializer, TaskCreateSerializer, TaskUpdateSerializer, TaskWithBoardSerializer, UserSerializer, BoardDetailSerializer
 
@@ -78,12 +78,20 @@ class ReviewingTaskListView(generics.ListAPIView):
 
 class CommentListCreateView(generics.ListCreateAPIView):
     serializer_class = CommentSerializer
+    permission_classes = [IsAuthenticated, IsTaskBoardMember]
 
     def get_queryset(self):
         return Comment.objects.filter(task_id=self.kwargs["task_id"])
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user, task_id=self.kwargs["task_id"])
+
+
+class CommentDeleteView(generics.DestroyAPIView):
+    permission_classes = [IsAuthenticated, IsTaskBoardMember, IsCommentAuthor]
+
+    def get_queryset(self):
+        return Comment.objects.filter(task_id=self.kwargs["task_id"])
 
 
 class BoardDetailView(generics.RetrieveUpdateDestroyAPIView):

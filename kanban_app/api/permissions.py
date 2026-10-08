@@ -1,5 +1,8 @@
 from django.http import request
+from django.shortcuts import get_object_or_404
 from rest_framework.permissions import BasePermission
+
+from kanban_app.models import Task
 
 
 class IsBoardOwnerOrMember(BasePermission):
@@ -21,3 +24,18 @@ class TaskAccessPermission(BasePermission):
             is_board_owner = obj.board.owner_id == request.user.id
             return is_creator or is_board_owner
         return obj.board.user_has_access(request.user)
+
+
+class IsTaskBoardMember(BasePermission):
+    """Only users with access to the task's board may read or write its comments."""
+
+    def has_permission(self, request, view):
+        task = get_object_or_404(Task, id=view.kwargs["task_id"])
+        return task.board.user_has_access(request.user)
+
+
+class IsCommentAuthor(BasePermission):
+    """Only the author of a comment may delete it."""
+
+    def has_object_permission(self, request, view, comment):
+        return comment.author_id == request.user.id

@@ -74,3 +74,82 @@ class CommentCreateTests(CommentTestCase):
         response = self.client.post(self.list_url(), {"content": ""}, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("content", response.data)
+
+
+class CommentAccessTests(CommentTestCase):
+
+    def test_outsider_cannot_read_comments(self):
+        self.authenticate(self.outsider)
+        response = self.client.get(self.list_url())
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_outsider_cannot_create_comment(self):
+        self.authenticate(self.outsider)
+        response = self.client.post(self.list_url(), {"content": "Hi"}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(Comment.objects.count(), 1)
+
+    def test_outsider_gets_403_before_validation(self):
+        self.authenticate(self.outsider)
+        response = self.client.post(self.list_url(), {"content": ""}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_board_owner_can_read_comments(self):
+        self.authenticate(self.owner)
+        response = self.client.get(self.list_url())
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_unknown_task_returns_404(self):
+        self.authenticate(self.member)
+        response = self.client.get(self.list_url(9999))
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class CommentDeleteTests(CommentTestCase):
+
+    def detail_url(self, task_id=None, comment_id=None):
+        return reverse(
+            "comment-detail",
+            kwargs={
+                "task_id": task_id or self.task.id,
+                "pk": comment_id or self.comment.id,
+            },
+        )
+
+    def test_requires_authentication(self):
+        response = self.client.delete(self.detail_url())
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_author_can_delete_comment(self):
+        self.authenticate(self.member)
+        response = self.client.delete(self.detail_url())
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Comment.objects.filter(id=self.comment.id).exists())
+
+    def test_board_owner_cannot_delete_foreign_comment(self):
+        self.authenticate(self.owner)
+        response = self.client.delete(self.detail_url())
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertTrue(Comment.objects.filter(id=self.comment.id).exists())
+
+    def test_outsider_cannot_delete_comment(self):
+        self.authenticate(self.outsider)
+        response = self.client.delete(self.detail_url())
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_unknown_comment_returns_404(self):
+        self.authenticate(self.member)
+        response = self.client.delete(self.detail_url(comment_id=9999))
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_unknown_task_returns_404(self):
+        self.authenticate(self.member)
+        response = self.client.delete(self.detail_url(task_id=9999))
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_comment_under_wrong_task_returns_404(self):
+        other_task = self.create_task("done", "low")
+        self.authenticate(self.member)
+        response = self.client.delete(self.detail_url(task_id=other_task.id))
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertTrue(Comment.objects.filter(id=self.comment.id).exists())

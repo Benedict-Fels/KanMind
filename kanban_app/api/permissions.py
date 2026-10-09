@@ -8,7 +8,6 @@ from kanban_app.models import Task
 
 class IsBoardOwnerOrMember(BasePermission):
     """Owner and members may view and edit a board.
-
     Only the owner may delete it.
     """
 
@@ -29,7 +28,6 @@ def user_has_board_access(board, user):
 
 class TaskAccessPermission(BasePermission):
     """Everyone with access to the board may edit a task.
-
     Only the task creator or the board owner may delete it.
     """
 
